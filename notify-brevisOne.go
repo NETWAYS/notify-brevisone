@@ -54,6 +54,32 @@ type Message struct {
 	Type string `json:"type"`
 }
 
+func apiRequest(client *http.Client, url string, buf *bytes.Buffer, token string) (respBody []byte, err error) {
+	req, err := http.NewRequest("POST", url, buf)
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	if token != "" {
+		req.Header.Add("Authorization", "Bearer "+token)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	respBody, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return respBody, errors.New("StatusCode was: "+ string(resp.StatusCode))
+	}
+
+	return respBody, nil
+}
+
 func main() {
 	defer check.CatchPanic()
 
@@ -172,36 +198,14 @@ func main() {
 	}
 	//fmt.Println(buf.String())
 
-	req, err := http.NewRequest("POST", baseUrl+"signin", &buf)
+	resp, err := apiRequest(client, baseUrl+"signin", &buf, "")
 	if err != nil {
+		fmt.Printf("%s\n", resp)
 		check.ExitError(err)
 	}
-	//fmt.Println(req)
-	//fmt.Println(req.Body)
-
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, err := client.Do(req)
-	if err != nil {
-		check.ExitError(err)
-	}
-
-	if resp.StatusCode != 200 {
-		check.ExitError(errors.New("Could not create authentication token"))
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		check.ExitError(err)
-	}
-	resp.Body.Close()
-
-	// body now should look like that {"jwt":"AUTH_TOKEN","expireAt":SOME_NUMBER}
-	// we need AUTH_TOKEN
 
 	var token AuthTokenAnswer
-	err = json.Unmarshal(body, &token)
+	err = json.Unmarshal(resp, &token)
 	if err != nil {
 		check.ExitError(err)
 	}
@@ -229,31 +233,12 @@ func main() {
 		check.ExitError(err)
 	}
 
-	req, err = http.NewRequest("POST", baseUrl+"messages", &buf)
+	resp, err = apiRequest(client, baseUrl+"messages", &buf, token.Token)
 	if err != nil {
+		fmt.Printf("%s\n", resp)
 		check.ExitError(err)
 	}
 
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+token.Token)
-
-	resp, err = client.Do(req)
-	if err != nil {
-		check.ExitError(err)
-	}
-
-	body, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		check.ExitError(err)
-	}
-	resp.Body.Close()
-
-	if resp.StatusCode != 200 {
-		fmt.Printf("Send message Status code: %d\n", resp.StatusCode)
-		fmt.Printf("Send message Return body: %s\n", body)
-		check.ExitError(errors.New("Could not send message"))
-	}
 
 	if config.ring {
 		// Additional request to ring
@@ -262,31 +247,11 @@ func main() {
 		if err != nil {
 			check.ExitError(err)
 		}
-
-		req, err = http.NewRequest("POST", baseUrl+"messages", &buf)
+		resp, err = apiRequest(client, baseUrl+"messages", &buf, token.Token)
 		if err != nil {
+			fmt.Printf("%s\n", resp)
 			check.ExitError(err)
 		}
-
-		req.Header.Add("accept", "application/json")
-		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Authorization", "Bearer "+token.Token)
-
-		resp, err = client.Do(req)
-		if err != nil {
-			check.ExitError(err)
-		}
-
-		body, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			check.ExitError(err)
-		}
-		if resp.StatusCode != 200 {
-			fmt.Printf("Send message Status code: %d\n", resp.StatusCode)
-			fmt.Printf("Send message Return body: %s\n", body)
-			check.ExitError(errors.New("Failed to ring"))
-		}
-		resp.Body.Close()
 	}
 
 	//fmt.Printf("Return from send message: %s\n", body)
