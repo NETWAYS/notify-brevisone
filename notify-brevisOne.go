@@ -26,8 +26,10 @@ func main() {
 	gateway := plugin.FlagSet.StringP("gatewayIP", "g", "", "IP/Address of the Brevis.one gateway (required)")
 	contact := plugin.FlagSet.StringP("contact", "c", "", "Contact name (Group or contact) or number (required)")
 	ring := plugin.FlagSet.BoolP("ring", "r", false, "Ring mode (optional, if not set, send SMS)")
+
 	username := plugin.FlagSet.StringP("username", "u", "", "API user name (required)")
 	password := plugin.FlagSet.StringP("password", "p", "", "API user password (required)")
+	skipVerify := plugin.FlagSet.BoolP("skipTlsVerify", "", false, "Skip verification of the TLS certificates (is needed for the default self signed certificate of the Brevis.One device")
 
 	checkState := plugin.FlagSet.IntP("checkresult", "s", -1, "Return code of the host/service check (required)")
 	checkOutput := plugin.FlagSet.StringP("output", "o", "", "Output of the host/service check (required)")
@@ -106,7 +108,9 @@ func main() {
 	}
 
 	var tlsConf tls.Config
-	tlsConf.InsecureSkipVerify = true
+	if *skipVerify {
+		tlsConf.InsecureSkipVerify = true
+	}
 
 	client := &http.Client{Transport: &http.Transport{TLSClientConfig: &tlsConf}}
 
