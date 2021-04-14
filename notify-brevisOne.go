@@ -8,7 +8,7 @@ import (
 	"github.com/NETWAYS/go-check"
 	"io/ioutil"
 	"net/http"
-	"regexp"
+	"encoding/json"
 )
 
 const readme = `Notifications via a Brevis.One gateway.
@@ -30,6 +30,28 @@ type Config struct {
 	comment string
 	date string
 	notificationType string
+}
+
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type AuthTokenAnswer struct {
+	Token string `json:"jwt"`
+	ExpireAt uint `json:"expireAt"`
+}
+
+type Recipient struct {
+	To string `json:"to"`
+	Target string `json:"target"`
+}
+
+type Message struct {
+	Recipients []Recipient `json:"recipients"`
+	Text string `json:"text"`
+	Provider string `json:"provider"`
+	Type string `json:"type"`
 }
 
 func main() {
@@ -139,11 +161,23 @@ func main() {
 	// ========================
 	// Get authentication token
 	// ========================
-	signinCreds := []byte("{\"username\": \"" + config.username + "\",\"password\": \"" + config.password + "\"}")
-	req, err := http.NewRequest("POST", baseUrl+"signin", bytes.NewBuffer(signinCreds))
+
+	var buf bytes.Buffer
+
+	j := json.NewEncoder(&buf)
+	j.SetIndent("", "    ") // for pretty printing
+	err := j.Encode(Credentials{config.username, config.password})
 	if err != nil {
 		check.ExitError(err)
 	}
+	//fmt.Println(buf.String())
+
+	req, err := http.NewRequest("POST", baseUrl+"signin", &buf)
+	if err != nil {
+		check.ExitError(err)
+	}
+	//fmt.Println(req)
+	//fmt.Println(req.Body)
 
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
@@ -165,37 +199,44 @@ func main() {
 
 	// body now should look like that {"jwt":"AUTH_TOKEN","expireAt":SOME_NUMBER}
 	// we need AUTH_TOKEN
-	re := regexp.MustCompile("\"jwt\":\"(?P<authToken>[[:graph:]]+?)\"")
-	//authPart := re.Find(body)
-	authPart := re.FindSubmatch(body)
-	if authPart == nil {
-		//fmt.Println(string(body[:]))
-		check.ExitError(errors.New("No Auth Token in body"))
+
+	var token AuthTokenAnswer
+	err = json.Unmarshal(body, &token)
+	if err != nil {
+		check.ExitError(err)
 	}
 
-	authToken := string(authPart[1][:])
-
+	//fmt.Println(token.Token)
 
 	// ============
 	// Send message
 	// ============
 
-	recipients := `[{"to":"` + config.target + `","target":"` + config.targetType + `"}]`
-	text := `"text":"` + msg + `"`
-	provider := `"provider":"sms"`
-	providerType := `"type":"default"`
-	messageBody := fmt.Sprintf(`{"recipients":%s,%s,%s,%s}`, recipients, text, provider, providerType)
+	m := Message{
+		Recipients: []Recipient{{
+			To: config.target,
+			Target: config.targetType,
+		}},
+		Text: msg,
+		Provider: "sms",
+		Type: "default",
+	}
 
 	//fmt.Printf("messageBody: %s\n", messageBody)
 
-	req, err = http.NewRequest("POST", baseUrl+"messages", bytes.NewBuffer([]byte(messageBody)))
+	err = j.Encode(m)
+	if err != nil {
+		check.ExitError(err)
+	}
+
+	req, err = http.NewRequest("POST", baseUrl+"messages", &buf)
 	if err != nil {
 		check.ExitError(err)
 	}
 
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+authToken)
+	req.Header.Add("Authorization", "Bearer "+token.Token)
 
 	resp, err = client.Do(req)
 	if err != nil {
@@ -216,17 +257,20 @@ func main() {
 
 	if config.ring {
 		// Additional request to ring
-		providerType = `"type":"ring"`
-		messageBody = fmt.Sprintf(`{"recipients":%s,%s,%s,%s}`, recipients, text, provider, providerType)
+		m.Type = "ring"
+		err = j.Encode(m)
+		if err != nil {
+			check.ExitError(err)
+		}
 
-		req, err = http.NewRequest("POST", baseUrl+"messages", bytes.NewBuffer([]byte(messageBody)))
+		req, err = http.NewRequest("POST", baseUrl+"messages", &buf)
 		if err != nil {
 			check.ExitError(err)
 		}
 
 		req.Header.Add("accept", "application/json")
 		req.Header.Add("Content-Type", "application/json")
-		req.Header.Add("Authorization", "Bearer "+authToken)
+		req.Header.Add("Authorization", "Bearer "+token.Token)
 
 		resp, err = client.Do(req)
 		if err != nil {
