@@ -24,7 +24,9 @@ func main() {
 	plugin.Version = "0.1"
 
 	gateway := plugin.FlagSet.StringP("gatewayIP", "g", "", "IP/Address of the Brevis.one gateway (required)")
-	contact := plugin.FlagSet.StringP("contact", "c", "", "Contact name (Group or contact) or number (required)")
+	target := plugin.FlagSet.StringP("target", "", "", "Contact name (Group or contact) or phone number (required)")
+	// TODO:Detect target type automatically?
+	targetType := plugin.FlagSet.StringP("targetType", "", "number", "Type of the contact, may be one of: number, contact or contactgroup")
 	ring := plugin.FlagSet.BoolP("ring", "r", false, "Ring mode (optional, if not set, send SMS)")
 
 	username := plugin.FlagSet.StringP("username", "u", "", "API user name (required)")
@@ -58,8 +60,12 @@ func main() {
 		check.ExitError(errors.New("Gateway IP/Address not set"))
 	}
 
-	if *contact == "" {
+	if *target == "" {
 		check.ExitError(errors.New("Contact not set"))
+	}
+
+	if *targetType != "number" && *targetType != "contact" && *targetType != "contactgroup" {
+		check.ExitError(errors.New("Not a valid targetType"))
 	}
 
 	if *hostName == "" {
@@ -153,11 +159,12 @@ func main() {
 
 	authToken := string(authPart[1][:])
 
+
 	// ============
 	// Send message
 	// ============
 
-	recipients := `[{"to":"` + *contact + `","target":"number"}]`
+	recipients := `[{"to":"` + *target + `","target":"` + *targetType + `"}]`
 	text := `"text":"` + msg + `"`
 	provider := `"provider":"sms"`
 	providerType := `"type":"default"`
