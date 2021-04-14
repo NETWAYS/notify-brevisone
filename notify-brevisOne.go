@@ -23,10 +23,9 @@ func main() {
 	plugin.Timeout = 30
 	plugin.Version = "0.1"
 
-	// targetNumber
-	//ring := plugin.FlagSet.BoolP("ring", "r", false, "Ring mode (optional, if not set, send SMS)")
 	gateway := plugin.FlagSet.StringP("gatewayIP", "g", "", "IP/Address of the Brevis.one gateway (required)")
 	contact := plugin.FlagSet.StringP("contact", "c", "", "Contact name (Group or contact) or number (required)")
+	ring := plugin.FlagSet.BoolP("ring", "r", false, "Ring mode (optional, if not set, send SMS)")
 	username := plugin.FlagSet.StringP("username", "u", "", "API user name (required)")
 	password := plugin.FlagSet.StringP("password", "p", "", "API user password (required)")
 
@@ -157,7 +156,13 @@ func main() {
 	recipients := `[{"to":"` + *contact + `","target":"number"}]`
 	text := `"text":"` + msg + `"`
 	provider := `"provider":"sms"`
-	providerType := `"type":"default"`
+
+	var providerType string
+	if *ring {
+		providerType = `"type":"ring"`
+	} else {
+		providerType = `"type":"default"`
+	}
 	messageBody := fmt.Sprintf(`{"recipients":%s,%s,%s,%s}`, recipients, text, provider, providerType)
 
 	//fmt.Printf("messageBody: %s\n", messageBody)
