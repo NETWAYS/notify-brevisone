@@ -156,25 +156,20 @@ func main() {
 	recipients := `[{"to":"` + *contact + `","target":"number"}]`
 	text := `"text":"` + msg + `"`
 	provider := `"provider":"sms"`
-
-	var providerType string
-	if *ring {
-		providerType = `"type":"ring"`
-	} else {
-		providerType = `"type":"default"`
-	}
+	providerType := `"type":"default"`
 	messageBody := fmt.Sprintf(`{"recipients":%s,%s,%s,%s}`, recipients, text, provider, providerType)
 
 	//fmt.Printf("messageBody: %s\n", messageBody)
 
 	req, err = http.NewRequest("POST", baseUrl+"messages", bytes.NewBuffer([]byte(messageBody)))
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+authToken)
-	//fmt.Println(req)
 	if err != nil {
 		check.ExitError(err)
 	}
+
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+authToken)
+
 	resp, err = client.Do(req)
 	if err != nil {
 		check.ExitError(err)
@@ -190,6 +185,37 @@ func main() {
 		fmt.Printf("Send message Status code: %d\n", resp.StatusCode)
 		fmt.Printf("Send message Return body: %s\n", body)
 		check.ExitError(errors.New("Could not send message"))
+	}
+
+	if *ring {
+		// Additional request to ring
+		providerType = `"type":"ring"`
+		messageBody = fmt.Sprintf(`{"recipients":%s,%s,%s,%s}`, recipients, text, provider, providerType)
+
+		req, err = http.NewRequest("POST", baseUrl+"messages", bytes.NewBuffer([]byte(messageBody)))
+		if err != nil {
+			check.ExitError(err)
+		}
+
+		req.Header.Add("accept", "application/json")
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Authorization", "Bearer "+authToken)
+
+		resp, err = client.Do(req)
+		if err != nil {
+			check.ExitError(err)
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			check.ExitError(err)
+		}
+		if resp.StatusCode != 200 {
+			fmt.Printf("Send message Status code: %d\n", resp.StatusCode)
+			fmt.Printf("Send message Return body: %s\n", body)
+			check.ExitError(errors.New("Failed to ring"))
+		}
+		resp.Body.Close()
 	}
 
 	//fmt.Printf("Return from send message: %s\n", body)
