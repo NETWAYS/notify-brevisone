@@ -41,7 +41,7 @@ func main() {
 	serviceName := plugin.FlagSet.StringP("service", "", "", "Name of the service object (required for service notifications)")
 	//serviceDisplayName := plugin.FlagSet.StringP("serviceDisplay", "", "", "Display name of the service object (optional)")
 	comment := plugin.FlagSet.StringP("comment", "", "", "Notification comment (optional)")
-	date := plugin.FlagSet.StringP("data", "", "", "Notification data")
+	date := plugin.FlagSet.StringP("date", "", "", "Notification date")
 
 	notificationType := plugin.FlagSet.StringP("type", "", "", "Notification type (e.g. Problem, Recovery, etc.")
 
@@ -122,7 +122,9 @@ func main() {
 
 	var baseUrl string = "https://" + *gateway + "/api/"
 
+	// ========================
 	// Get authentication token
+	// ========================
 	signinCreds := []byte("{\"username\": \"" + *username + "\",\"password\": \"" + *password + "\"}")
 	req, err := http.NewRequest("POST", baseUrl+"signin", bytes.NewBuffer(signinCreds))
 	if err != nil {
