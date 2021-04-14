@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
-	"net/http"
+	"crypto/tls"
+	"errors"
 	"fmt"
 	"github.com/NETWAYS/go-check"
 	"io/ioutil"
-	"errors"
-	"crypto/tls"
+	"net/http"
 	"regexp"
 )
 
@@ -17,10 +17,10 @@ Sends SMS or rings at a given number`
 func main() {
 	defer check.CatchPanic()
 
-    plugin := check.NewConfig()
-    plugin.Name = "notify-brevisOne"
-    plugin.Readme = readme
-    plugin.Timeout = 30
+	plugin := check.NewConfig()
+	plugin.Name = "notify-brevisOne"
+	plugin.Readme = readme
+	plugin.Timeout = 30
 	plugin.Version = "0.1"
 
 	// targetNumber
@@ -41,7 +41,6 @@ func main() {
 	date := plugin.FlagSet.StringP("data", "", "", "Notification data")
 
 	notificationType := plugin.FlagSet.StringP("type", "", "", "Notification type (e.g. Problem, Recovery, etc.")
-
 
 	// Parsing the arguments
 	plugin.ParseArguments()
@@ -99,10 +98,10 @@ func main() {
 		msg = msg[0:159]
 	}
 
-	if *comment != "" && remainingSymbols >= (len(*comment) + 1) {
+	if *comment != "" && remainingSymbols >= (len(*comment)+1) {
 		msg += "\n" + *comment
 
-		if *notificationAuthor != "" && ( (159 - len(msg)) < len(*notificationAuthor) ) {
+		if *notificationAuthor != "" && ((159 - len(msg)) < len(*notificationAuthor)) {
 			msg += "\n" + *notificationAuthor
 		}
 	}
@@ -116,7 +115,7 @@ func main() {
 
 	// Get authentication token
 	signinCreds := []byte("{\"username\": \"" + *username + "\",\"password\": \"" + *password + "\"}")
-	req, err := http.NewRequest("POST", baseUrl + "signin", bytes.NewBuffer(signinCreds))
+	req, err := http.NewRequest("POST", baseUrl+"signin", bytes.NewBuffer(signinCreds))
 	if err != nil {
 		check.ExitError(err)
 	}
@@ -159,14 +158,14 @@ func main() {
 	text := `"text":"` + msg + `"`
 	provider := `"provider":"sms"`
 	providerType := `"type":"default"`
-	messageBody := fmt.Sprintf(`{"recipients":%s,%s,%s,%s}` , recipients, text, provider, providerType)
+	messageBody := fmt.Sprintf(`{"recipients":%s,%s,%s,%s}`, recipients, text, provider, providerType)
 
 	//fmt.Printf("messageBody: %s\n", messageBody)
 
-	req, err = http.NewRequest("POST", baseUrl + "messages", bytes.NewBuffer([]byte(messageBody)))
+	req, err = http.NewRequest("POST", baseUrl+"messages", bytes.NewBuffer([]byte(messageBody)))
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer " + authToken)
+	req.Header.Add("Authorization", "Bearer "+authToken)
 	//fmt.Println(req)
 	if err != nil {
 		check.ExitError(err)
@@ -188,8 +187,7 @@ func main() {
 		check.ExitError(errors.New("Could not send message"))
 	}
 
-
 	//fmt.Printf("Return from send message: %s\n", body)
 
-	check.Exit(check.OK,"done")
+	check.Exit(check.OK, "done")
 }
