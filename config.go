@@ -8,6 +8,8 @@ import (
 	"net/http"
 )
 
+const SmsLength = 160
+
 type Config struct {
 	gateway            string
 	target             string
@@ -94,25 +96,26 @@ func (c *Config) FormatMessage() (msg string) {
 
 	if c.serviceName != "" {
 		// This is a service notification
-		msg += fmt.Sprintf("Srvc:%s @ %s - %s", c.serviceName, c.hostName, c.checkState)
+		msg += fmt.Sprintf("%s @ %s - %s", c.serviceName, c.hostName, c.checkState)
 	} else {
-		msg += fmt.Sprintf("Hst:%s - %s", c.hostName, c.checkState)
+		msg += fmt.Sprintf("%s - %s", c.hostName, c.checkState)
 	}
 
-	msg += " - " + c.checkOutput
+	if c.comment != "" {
+		msg += fmt.Sprintf("\n\"%s\"", c.comment)
 
-	remainingSymbols := 160 - len(msg)
-	if remainingSymbols < 0 {
-		// Gotta cut it :-|
-		msg = msg[0:159]
-	}
-
-	if c.comment != "" && remainingSymbols >= (len(c.comment)+1) {
-		msg += "\n" + c.comment
-
-		if c.notificationAuthor != "" && ((159 - len(msg)) < len(c.notificationAuthor)) {
-			msg += "\n" + c.notificationAuthor
+		if c.notificationAuthor != "" {
+			msg += fmt.Sprintf(` by %s`, c.notificationAuthor)
 		}
+	}
+
+	if c.checkOutput != "" {
+		msg += "\n" + c.checkOutput
+	}
+
+	// Cut off text longer than a single message
+	if len(msg) > SmsLength {
+		msg = msg[0:SmsLength-4] + "..."
 	}
 
 	return
