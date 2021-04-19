@@ -2,17 +2,22 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type ApiClient struct {
 	Client  *http.Client
 	Gateway string
 	Token   string
+	Timeout time.Duration
 }
+
+const DefaultTimeout = 5
 
 type Credentials struct {
 	Username string `json:"username"`
@@ -23,6 +28,7 @@ func NewApiClient(gateway string) *ApiClient {
 	return &ApiClient{
 		Client:  &http.Client{},
 		Gateway: gateway,
+		Timeout: DefaultTimeout * time.Second,
 	}
 }
 
@@ -60,10 +66,14 @@ func (ac *ApiClient) DoRequest(url string, body interface{}) (respBody []byte, e
 		return
 	}
 
+	// Setup Timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
+	defer cancel()
+
 	// Build Request
 	baseUrl := "https://" + ac.Gateway + "/api/"
 
-	req, err := http.NewRequest("POST", baseUrl+url, &buf)
+	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+url, &buf)
 	if err != nil {
 		return
 	}
