@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/NETWAYS/go-check"
 	"github.com/spf13/pflag"
 	"net/http"
 )
@@ -152,7 +151,7 @@ func (c *Config) Run() (err error) {
 	response, err := api.DoRequest("messages", message)
 	if err != nil {
 		err = fmt.Errorf("sending message failed: %s - %w", response, err)
-		check.ExitError(err)
+		return
 	}
 
 	// TODO: check response content
@@ -165,7 +164,7 @@ func (c *Config) Run() (err error) {
 		response, err = api.DoRequest("messages", message)
 		if err != nil {
 			err = fmt.Errorf("ringing failed: %s - %w", response, err)
-			check.ExitError(err)
+			return
 		}
 	}
 
