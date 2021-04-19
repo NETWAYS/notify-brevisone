@@ -102,7 +102,7 @@ func main() {
 	plugin.FlagSet.BoolVarP(&config.skipVerify, "skipTlsVerify", "", false, "Skip verification of the TLS certificates (is needed for the default self signed certificate of the Brevis.One device")
 
 	// Message configuration
-	plugin.FlagSet.StringVar(&config.checkState, "checkresult", "s",  "Return code of the host/service check (required)")
+	plugin.FlagSet.StringVar(&config.checkState, "checkresult", "",  "Return code of the host/service check (required)")
 	plugin.FlagSet.StringVarP(&config.checkOutput, "output", "o", "", "Output of the host/service check (required)")
 	plugin.FlagSet.StringVarP(&config.notificationAuthor, "notificationAuthor", "a", "", "Author of the notification (optional)")
 	plugin.FlagSet.StringVarP(&config.hostName, "host", "", "", "Name of the host object (required)")
