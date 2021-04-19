@@ -5,12 +5,27 @@ import (
 	"testing"
 )
 
+func TestConfig_Validate(t *testing.T) {
+	c := &Config{
+		gateway:          "brevisone.local",
+		username:         "admin",
+		password:         "admin",
+		target:           "+491710000",
+		targetType:       "number",
+		checkState:       "DOWN",
+		hostName:         "HOST",
+		notificationType: "PROBLEM",
+	}
+
+	assert.NoError(t, c.Validate())
+}
+
 func TestConfig_FormatMessage(t *testing.T) {
 	c := &Config{
-		checkState:         "DOWN",
-		checkOutput:        "Stuff is broken!",
-		notificationAuthor: "",
-		hostName:           "HOST",
+		checkState:  "DOWN",
+		checkOutput: "Stuff is broken!",
+		author:      "",
+		hostName:    "HOST",
 		//date:               "2014-01-03 11:23:08 +0000",
 		notificationType: "PROBLEM",
 	}
@@ -26,7 +41,7 @@ func TestConfig_FormatMessage(t *testing.T) {
 
 	// With comment
 	c.notificationType = "CUSTOM"
-	c.notificationAuthor = "icingaadmin"
+	c.author = "icingaadmin"
 	c.comment = "ok for now"
 
 	assert.Equal(t,

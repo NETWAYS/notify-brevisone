@@ -11,59 +11,58 @@ import (
 const SmsLength = 160
 
 type Config struct {
-	gateway            string
-	target             string
-	targetType         string
-	ring               bool
-	username           string
-	password           string
-	skipVerify         bool
-	checkState         string
-	checkOutput        string
-	notificationAuthor string
-	hostName           string
-	serviceName        string
-	comment            string
-	date               string
-	notificationType   string
+	gateway          string
+	target           string
+	targetType       string
+	ring             bool
+	username         string
+	password         string
+	insecure         bool
+	checkState       string
+	checkOutput      string
+	author           string
+	hostName         string
+	serviceName      string
+	comment          string
+	date             string
+	notificationType string
 }
 
 func (c *Config) BindArguments(fs *pflag.FlagSet) {
-	fs.StringVarP(&c.gateway, "gateway", "g", "", "IP/Address of the Brevis.one gateway (required)")
-	fs.StringVarP(&c.target, "target", "", "", "Contact name (Group or contact) or phone number (required)")
-	// TODO:Detect target type automatically?
-	fs.StringVarP(&c.targetType, "targetType", "", "number",
-		"Type of the contact, may be one of: number, contact or contactgroup")
-	fs.BoolVarP(&c.ring, "ring", "r", false, "Ring mode (optional, if not set, send SMS)")
+	// Basic connection settings
+	fs.StringVarP(&c.gateway, "gateway", "g", "", "IP/address of the brevis.one gateway (required)")
 	fs.StringVarP(&c.username, "username", "u", "", "API user name (required)")
 	fs.StringVarP(&c.password, "password", "p", "", "API user password (required)")
-	fs.BoolVarP(&c.skipVerify, "skipTlsVerify", "", false,
+	fs.BoolVar(&c.insecure, "insecure", false,
 		"Skip verification of the TLS certificates (is needed for the default self signed certificate)")
 
-	// Message configuration
-	fs.StringVar(&c.checkState, "checkresult", "s", "Return code of the host/service check (required)")
-	fs.StringVarP(&c.checkOutput, "output", "o", "", "Output of the host/service check (required)")
-	fs.StringVarP(&c.notificationAuthor, "notificationAuthor", "a", "", "Author of the notification (optional)")
-	fs.StringVarP(&c.hostName, "host", "", "", "Name of the host object (required)")
-	//hostDisplayName := fs.StringP("hostDisplay", "", "", "Display name of the host object (optional)")
-	fs.StringVarP(&c.serviceName, "service", "", "", "Name of the service object (required for service notifications)")
-	//serviceDisplayName := fs.StringP("serviceDisplay", "", "", "Display name of the service object (optional)")
-	fs.StringVarP(&c.comment, "comment", "", "", "Notification comment (optional)")
-	fs.StringVarP(&c.date, "date", "", "", "Notification date")
-	fs.StringVarP(&c.notificationType, "type", "", "", "Notification type (e.g. Problem, Recovery, etc.")
+	// Where to send the message to
+	fs.StringVarP(&c.target, "target", "T", "", "Target contact, group or phone number (required)")
+	fs.StringVar(&c.targetType, "target-type", "number", "Target type, one of: number, contact or contactgroup")
+	fs.BoolVarP(&c.ring, "ring", "R", false, "Add ring mode (also ring the target after sending SMS)")
+
+	// Notification data
+	fs.StringVarP(&c.notificationType, "type", "", "", "Icinga $notification.type$ (required)")
+	fs.StringVarP(&c.hostName, "host", "H", "", "Icinga $host.name$ (required)")
+	fs.StringVarP(&c.serviceName, "service", "S", "", "Icinga $service.name$ (required for service notifications)")
+	fs.StringVarP(&c.checkState, "state", "s", "", "Icinga $host.state$ or $service.state$ (required)")
+	fs.StringVarP(&c.checkOutput, "output", "o", "", "Icinga $host.output or $service.output$ (required)")
+	fs.StringVarP(&c.comment, "comment", "C", "", "Icinga $notification.comment$ (optional)")
+	fs.StringVarP(&c.author, "author", "a", "", "Icinga $notification.author$ (optional)")
+	fs.StringVar(&c.date, "date", "", "Icinga $icinga.long_date_time$ (optional)")
 }
 
 func (c *Config) Validate() error {
+	if c.gateway == "" {
+		return errors.New("gateway IP/address not set")
+	}
+
 	if c.username == "" {
 		return errors.New("username not set")
 	}
 
 	if c.password == "" {
 		return errors.New("password not set")
-	}
-
-	if c.gateway == "" {
-		return errors.New("gateway IP/address not set")
 	}
 
 	if c.target == "" {
@@ -76,6 +75,10 @@ func (c *Config) Validate() error {
 
 	if c.hostName == "" {
 		return errors.New("hostName must be set")
+	}
+
+	if c.notificationType == "" {
+		return errors.New("notification type must be set")
 	}
 
 	if c.checkState == "" {
@@ -104,8 +107,8 @@ func (c *Config) FormatMessage() (msg string) {
 	if c.comment != "" {
 		msg += fmt.Sprintf("\n\"%s\"", c.comment)
 
-		if c.notificationAuthor != "" {
-			msg += fmt.Sprintf(` by %s`, c.notificationAuthor)
+		if c.author != "" {
+			msg += fmt.Sprintf(` by %s`, c.author)
 		}
 	}
 
@@ -126,7 +129,7 @@ func (c *Config) Run() (err error) {
 	api := NewApiClient(c.gateway)
 
 	// Update client to allow insecure when requested
-	if c.skipVerify {
+	if c.insecure {
 		api.Client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true, // nolint:gosec
