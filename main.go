@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/NETWAYS/go-check"
 )
 
@@ -21,10 +23,17 @@ func main() {
 
 	plugin.ParseArguments()
 
+	if len(os.Args) <= 1 {
+		plugin.FlagSet.Usage()
+		check.Exit(check.Unknown, "No arguments given")
+	}
+
 	err := config.Validate()
 	if err != nil {
 		check.ExitError(err)
 	}
+
+	plugin.SetupLogging()
 
 	err = config.Run()
 	if err != nil {
