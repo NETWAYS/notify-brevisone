@@ -42,8 +42,9 @@ An example for a (custom) service notification with a preconfigured contact:
 	'--type' 'CUSTOM' \
 	'-a' 'aRandomMonitor' \
 	'-o' 'Hello World' \
-	'--checkresult' 'WARNING'
+	'--state' 'WARNING'
 ```
+sends the message: `2021-04-14 15:29:06 +0200/CUSTOM: fake @ myHost - WARNING "asfsdf" by aRandomMonitor Hello World`
 
 An example for a (recovery) Host notification with a phone number directly
 ```
@@ -57,5 +58,6 @@ An example for a (recovery) Host notification with a phone number directly
 	'--type' 'RECOVERY' \
 	'-a' 'aRandomMonitor' \
 	'-o' 'It pings again!' \
-	'--checkresult' 'OK'
+	'--state' 'OK'
 ```
+sends the message: `2021-04-14 15:29:06 +0200/RECOVERY: myHost - OK It pings again!`
