@@ -16,7 +16,7 @@ func main() {
 	plugin.Name = "notify-brevisone"
 	plugin.Readme = readme
 	plugin.Timeout = 30
-	plugin.Version = "0.1"
+	plugin.Version = buildVersion()
 
 	config := &Config{}
 	config.BindArguments(plugin.FlagSet)
