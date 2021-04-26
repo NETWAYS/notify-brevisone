@@ -7,7 +7,9 @@ import (
 )
 
 const readme = `Notifications via a brevis.one gateway.
-Sends SMS or rings at a given number`
+Sends SMS or rings at a given number
+
+https://github.com/NETWAYS/notify-brevisone`
 
 func main() {
 	defer check.CatchPanic()
