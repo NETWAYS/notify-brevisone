@@ -105,7 +105,7 @@ func (c *Config) FormatMessage() (msg string) {
 	}
 
 	if c.comment != "" {
-		msg += fmt.Sprintf("\n\"%s\"", c.comment)
+		msg += fmt.Sprintf("\r\n\"%s\"", c.comment)
 
 		if c.author != "" {
 			msg += fmt.Sprintf(` by %s`, c.author)
@@ -113,7 +113,7 @@ func (c *Config) FormatMessage() (msg string) {
 	}
 
 	if c.checkOutput != "" {
-		msg += "\n" + c.checkOutput
+		msg += "\r\n" + c.checkOutput
 	}
 
 	// Cut off text longer than a single message
