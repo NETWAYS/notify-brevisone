@@ -31,13 +31,13 @@ func TestConfig_FormatMessage(t *testing.T) {
 	}
 
 	// Host Problem Notification
-	assert.Equal(t, "PROBLEM: HOST - DOWN\nStuff is broken!", c.FormatMessage())
+	assert.Equal(t, "PROBLEM: HOST - DOWN\r\nStuff is broken!", c.FormatMessage())
 
 	// Service Problem Notification
 	c.checkState = "CRITICAL"
 	c.serviceName = "SERVICE"
 
-	assert.Equal(t, "PROBLEM: SERVICE @ HOST - CRITICAL\nStuff is broken!", c.FormatMessage())
+	assert.Equal(t, "PROBLEM: SERVICE @ HOST - CRITICAL\r\nStuff is broken!", c.FormatMessage())
 
 	// With comment
 	c.notificationType = "CUSTOM"
@@ -45,7 +45,7 @@ func TestConfig_FormatMessage(t *testing.T) {
 	c.comment = "ok for now"
 
 	assert.Equal(t,
-		"CUSTOM: SERVICE @ HOST - CRITICAL\n\"ok for now\" by icingaadmin\nStuff is broken!",
+		"CUSTOM: SERVICE @ HOST - CRITICAL\r\n\"ok for now\" by icingaadmin\r\nStuff is broken!",
 		c.FormatMessage())
 
 	// With a long message cut off
@@ -54,7 +54,7 @@ func TestConfig_FormatMessage(t *testing.T) {
 		"scrambled it to make a type specimen book."
 
 	assert.Equal(t,
-		"CUSTOM: SERVICE @ HOST - CRITICAL\n\"ok for now\" by icingaadmin\n"+
-			"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has bee...",
+		"CUSTOM: SERVICE @ HOST - CRITICAL\r\n\"ok for now\" by icingaadmin\r\n"+
+			"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has b...",
 		c.FormatMessage())
 }
