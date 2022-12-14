@@ -80,6 +80,33 @@ func (ac *ApiClient) DoLegacyReqest(useTls bool,
 
 	myUrl = myUrl + params.Encode()
 
+	// Setup Timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", myUrl, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := ac.Client.Do(req)
+	if err != nil {
+		err = fmt.Errorf("executing API request failed: %w", err)
+		return err
+	}
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		err = fmt.Errorf("reading API response failed: %w\nBody: %s", err, respBody)
+		return err
+	}
+
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("API request failed with status %d", resp.StatusCode)
+		return err
+	}
+
 	return nil
 }
 
