@@ -63,7 +63,13 @@ func (ac *ApiClient) DoLegacyReqest(mode string,
 	password string) error {
 
 	params := url.Values{}
-	params.Add("mode", mode)
+	if mode == "contactgroup" {
+		params.Add("mode", "group")
+	} else if mode == "contact" {
+		params.Add("mode", "user")
+	} else {
+		params.Add("mode", "number")
+	}
 	params.Add("to", to)
 	params.Add("text", text)
 	params.Add("username", username)
