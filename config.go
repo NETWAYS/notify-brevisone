@@ -27,7 +27,7 @@ type Config struct {
 	comment          string
 	date             string
 	notificationType string
-	useTLS           bool
+	doNotUseTLS      bool
 	useLegacyHttpApi bool
 }
 
@@ -38,7 +38,7 @@ func (c *Config) BindArguments(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.password, "password", "p", "", "API user password (required)")
 	fs.BoolVar(&c.insecure, "insecure", false,
 		"Skip verification of the TLS certificates (is needed for the default self signed certificate)")
-	fs.BoolVar(&c.useTLS, "useTls", true, "Use TLS to connect to the device")
+	fs.BoolVar(&c.doNotUseTLS, "useTls", true, "Use TLS to connect to the device")
 	fs.BoolVar(&c.useLegacyHttpApi, "useLegacyHttpApi", false, "Use old HTTP API (required on older firmware versions)")
 
 	// Where to send the message to
@@ -142,11 +142,10 @@ func (c *Config) Run() (err error) {
 		}
 	}
 
-	api.UseTls = c.useTLS
+	api.UseTls = !c.doNotUseTLS
 
 	if c.useLegacyHttpApi {
-		err := api.DoLegacyReqest(c.useTLS,
-			c.targetType,
+		err := api.DoLegacyReqest(c.targetType,
 			c.target,
 			c.FormatMessage(),
 			c.username,

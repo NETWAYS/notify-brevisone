@@ -56,8 +56,7 @@ func (ac *ApiClient) Login(username, password string) (err error) {
 	return
 }
 
-func (ac *ApiClient) DoLegacyReqest(useTls bool,
-	mode string,
+func (ac *ApiClient) DoLegacyReqest(mode string,
 	to string,
 	text string,
 	username string,
@@ -72,7 +71,7 @@ func (ac *ApiClient) DoLegacyReqest(useTls bool,
 
 	var myUrl string
 
-	if useTls {
+	if ac.UseTls {
 		myUrl = "https://" + ac.Gateway + "/api.php"
 	} else {
 		myUrl = "http://" + ac.Gateway + "/api.php"
