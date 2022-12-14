@@ -37,9 +37,9 @@ func (c *Config) BindArguments(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.username, "username", "u", "", "API user name (required)")
 	fs.StringVarP(&c.password, "password", "p", "", "API user password (required)")
 	fs.BoolVar(&c.insecure, "insecure", false,
-		"Skip verification of the TLS certificates (is needed for the default self signed certificate)")
-	fs.BoolVar(&c.doNotUseTLS, "useTls", true, "Use TLS to connect to the device")
-	fs.BoolVar(&c.useLegacyHttpApi, "useLegacyHttpApi", false, "Use old HTTP API (required on older firmware versions)")
+		"Skip verification of the TLS certificates (is needed for the default self signed certificate, default false)")
+	fs.BoolVar(&c.doNotUseTLS, "doNotUseTLS", false, "Do NOT use TLS to connect to the gateway (default false)")
+	fs.BoolVar(&c.useLegacyHttpApi, "useLegacyHttpApi", false, "Use old HTTP API (required on older firmware versions, default false)")
 
 	// Where to send the message to
 	fs.StringVarP(&c.target, "target", "T", "", "Target contact, group or phone number (required)")
