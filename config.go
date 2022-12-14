@@ -4,8 +4,9 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"github.com/spf13/pflag"
 	"net/http"
+
+	"github.com/spf13/pflag"
 )
 
 const SmsLength = 160
@@ -26,6 +27,8 @@ type Config struct {
 	comment          string
 	date             string
 	notificationType string
+	useTLS           bool
+	useLegacyHttpApi bool
 }
 
 func (c *Config) BindArguments(fs *pflag.FlagSet) {
@@ -35,6 +38,8 @@ func (c *Config) BindArguments(fs *pflag.FlagSet) {
 	fs.StringVarP(&c.password, "password", "p", "", "API user password (required)")
 	fs.BoolVar(&c.insecure, "insecure", false,
 		"Skip verification of the TLS certificates (is needed for the default self signed certificate)")
+	fs.BoolVar(&c.useTLS, "useTls", true, "Use TLS to connect to the device")
+	fs.BoolVar(&c.useLegacyHttpApi, "useLegacyHttpApi", false, "Use old HTTP API (required on older firmware versions)")
 
 	// Where to send the message to
 	fs.StringVarP(&c.target, "target", "T", "", "Target contact, group or phone number (required)")
@@ -137,40 +142,55 @@ func (c *Config) Run() (err error) {
 		}
 	}
 
-	// Login to API
-	err = api.Login(c.username, c.password)
-	if err != nil {
-		return
-	}
+	api.UseTls = c.useTLS
 
-	// Sending message via API
-	message := Message{
-		Recipients: []Recipient{{
-			To:     c.target,
-			Target: c.targetType,
-		}},
-		Text:     c.FormatMessage(),
-		Provider: "sms",
-		Type:     "default",
-	}
+	if c.useLegacyHttpApi {
+		err := api.DoLegacyReqest(c.useTLS,
+			c.targetType,
+			c.target,
+			c.FormatMessage(),
+			c.username,
+			c.password)
+		if err != nil {
+			return err
+		}
+	} else {
 
-	response, err := api.DoRequest("messages", message)
-	if err != nil {
-		err = fmt.Errorf("sending message failed: %s - %w", response, err)
-		return
-	}
+		// Login to API
+		err = api.Login(c.username, c.password)
+		if err != nil {
+			return
+		}
 
-	// TODO: check response content
+		// Sending message via API
+		message := Message{
+			Recipients: []Recipient{{
+				To:     c.target,
+				Target: c.targetType,
+			}},
+			Text:     c.FormatMessage(),
+			Provider: "sms",
+			Type:     "default",
+		}
 
-	// Additional request to ring after sending SMS
-	if c.ring {
-		message.Type = "ring"
+		response, err := api.DoRequest("messages", message)
+		if err != nil {
+			err = fmt.Errorf("sending message failed: %s - %w", response, err)
+			return err
+		}
 
 		// TODO: check response content
-		response, err = api.DoRequest("messages", message)
-		if err != nil {
-			err = fmt.Errorf("ringing failed: %s - %w", response, err)
-			return
+
+		// Additional request to ring after sending SMS
+		if c.ring {
+			message.Type = "ring"
+
+			// TODO: check response content
+			response, err = api.DoRequest("messages", message)
+			if err != nil {
+				err = fmt.Errorf("ringing failed: %s - %w", response, err)
+				return err
+			}
 		}
 	}
 

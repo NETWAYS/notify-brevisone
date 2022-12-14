@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type ApiClient struct {
 	Gateway string
 	Token   string
 	Timeout time.Duration
+	UseTls  bool
 }
 
 const DefaultTimeout = 5
@@ -54,7 +56,34 @@ func (ac *ApiClient) Login(username, password string) (err error) {
 	return
 }
 
-func (ac *ApiClient) DoRequest(url string, body interface{}) (respBody []byte, err error) {
+func (ac *ApiClient) DoLegacyReqest(useTls bool,
+	mode string,
+	to string,
+	text string,
+	username string,
+	password string) error {
+
+	params := url.Values{}
+	params.Add("mode", mode)
+	params.Add("to", to)
+	params.Add("text", text)
+	params.Add("username", username)
+	params.Add("password", password)
+
+	var myUrl string
+
+	if useTls {
+		myUrl = "https://" + ac.Gateway + "/api.php"
+	} else {
+		myUrl = "http://" + ac.Gateway + "/api.php"
+	}
+
+	myUrl = myUrl + params.Encode()
+
+	return nil
+}
+
+func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte, err error) {
 	// Build request body as JSON
 	var buf bytes.Buffer
 
@@ -70,12 +99,18 @@ func (ac *ApiClient) DoRequest(url string, body interface{}) (respBody []byte, e
 	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
 	defer cancel()
 
-	// Build Request
-	baseUrl := "https://" + ac.Gateway + "/api/"
+	var baseUrl string
 
-	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+url, &buf)
+	// Build Request
+	if ac.UseTls {
+		baseUrl = "https://" + ac.Gateway + "/api/"
+	} else {
+		baseUrl = "http://" + ac.Gateway + "/api/"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+rawUrl, &buf)
 	if err != nil {
-		return
+		return []byte(""), err
 	}
 
 	req.Header.Add("Accept", "application/json")
