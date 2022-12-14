@@ -56,7 +56,7 @@ func (ac *ApiClient) Login(username, password string) (err error) {
 	return
 }
 
-func (ac *ApiClient) DoLegacyReqest(mode string,
+func (ac *ApiClient) DoLegacyRequest(mode string,
 	to string,
 	text string,
 	username string,

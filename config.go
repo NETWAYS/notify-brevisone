@@ -145,7 +145,7 @@ func (c *Config) Run() (err error) {
 	api.UseTls = !c.doNotUseTLS
 
 	if c.useLegacyHttpApi {
-		err := api.DoLegacyReqest(c.targetType,
+		err := api.DoLegacyRequest(c.targetType,
 			c.target,
 			c.FormatMessage(),
 			c.username,
