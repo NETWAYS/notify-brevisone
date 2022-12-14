@@ -78,7 +78,7 @@ func (ac *ApiClient) DoLegacyReqest(useTls bool,
 		myUrl = "http://" + ac.Gateway + "/api.php"
 	}
 
-	myUrl = myUrl + params.Encode()
+	myUrl = myUrl + "?" + params.Encode()
 
 	// Setup Timeout context
 	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
