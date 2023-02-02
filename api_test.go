@@ -1,16 +1,17 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestApiClient_Login(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("POST", "https://brevisone.local/api/signin",
+	httpmock.RegisterResponder("POST", "http://brevisone.local/api/signin",
 		httpmock.NewStringResponder(200, `{"jwt":"abc123","expireAt":0}`))
 
 	ac := NewApiClient("brevisone.local")
@@ -25,7 +26,7 @@ func TestApiClient_DoRequest(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
-	httpmock.RegisterResponder("POST", "https://brevisone.local/api/test",
+	httpmock.RegisterResponder("POST", "http://brevisone.local/api/test",
 		httpmock.NewStringResponder(200, `{"test":true}`))
 
 	ac := NewApiClient("brevisone.local")
