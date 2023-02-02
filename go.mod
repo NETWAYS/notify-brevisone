@@ -1,6 +1,6 @@
 module github.com/NETWAYS/notify-brevisone
 
-go 1.15
+go 1.19
 
 require (
 	github.com/NETWAYS/go-check v0.3.0
