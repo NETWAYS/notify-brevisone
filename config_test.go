@@ -1,9 +1,19 @@
 package main
 
 import (
+	"github.com/NETWAYS/go-check"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+func TestConfig_Bind(t *testing.T) {
+	plugin := check.NewConfig()
+	config := &Config{}
+	config.BindArguments(plugin.FlagSet)
+	plugin.ParseArguments()
+
+	assert.Equal(t, true, plugin.FlagSet.Parsed())
+}
 
 func TestConfig_Validate(t *testing.T) {
 	c := &Config{
