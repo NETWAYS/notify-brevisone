@@ -1,4 +1,5 @@
 notify-brevis*
 dist/
-notify-brevisOne
 notify-brevisone
+*.out
+coverage.html
