@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -99,7 +99,7 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 		return err
 	}
 
-	respBody, err := ioutil.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		err = fmt.Errorf("reading API response failed: %w\nBody: %s", err, respBody)
 		return err
@@ -158,7 +158,7 @@ func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte
 		return
 	}
 
-	respBody, err = ioutil.ReadAll(resp.Body)
+	respBody, err = io.ReadAll(resp.Body)
 	if err != nil {
 		err = fmt.Errorf("reading API response failed: %w", err)
 		return
