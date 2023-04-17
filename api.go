@@ -61,8 +61,8 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 	text string,
 	username string,
 	password string) error {
-
 	params := url.Values{}
+
 	if mode == "contactgroup" {
 		params.Add("mode", "group")
 	} else if mode == "contact" {
@@ -70,6 +70,7 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 	} else {
 		params.Add("mode", "number")
 	}
+
 	params.Add("to", to)
 	params.Add("text", text)
 	params.Add("username", username)
@@ -93,13 +94,16 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 	if err != nil {
 		return err
 	}
+
 	resp, err := ac.Client.Do(req)
+
 	if err != nil {
 		err = fmt.Errorf("executing API request failed: %w", err)
 		return err
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
+
 	if err != nil {
 		err = fmt.Errorf("reading API response failed: %w\nBody: %s", err, respBody)
 		return err

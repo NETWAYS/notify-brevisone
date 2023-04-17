@@ -154,7 +154,6 @@ func (c *Config) Run() (err error) {
 			return err
 		}
 	} else {
-
 		// Login to API
 		err = api.Login(c.username, c.password)
 		if err != nil {
