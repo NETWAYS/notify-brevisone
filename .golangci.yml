@@ -6,12 +6,12 @@ run:
 linters:
   disable-all: false
   enable:
-    - funlen
     - dogsled
     - dupl
-    - lll
     - whitespace
     - wsl
+  disable:
+    - lll
   presets:
     - bugs
     - unused

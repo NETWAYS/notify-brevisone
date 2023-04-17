@@ -5,8 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type ApiClient struct {
 	Gateway string
 	Token   string
 	Timeout time.Duration
+	UseTls  bool
 }
 
 const DefaultTimeout = 5
@@ -54,7 +56,70 @@ func (ac *ApiClient) Login(username, password string) (err error) {
 	return
 }
 
-func (ac *ApiClient) DoRequest(url string, body interface{}) (respBody []byte, err error) {
+func (ac *ApiClient) DoLegacyRequest(mode string,
+	to string,
+	text string,
+	username string,
+	password string) error {
+	params := url.Values{}
+
+	if mode == "contactgroup" {
+		params.Add("mode", "group")
+	} else if mode == "contact" {
+		params.Add("mode", "user")
+	} else {
+		params.Add("mode", "number")
+	}
+
+	params.Add("to", to)
+	params.Add("text", text)
+	params.Add("username", username)
+	params.Add("password", password)
+
+	var myUrl string
+
+	if ac.UseTls {
+		myUrl = "https://" + ac.Gateway + "/api.php"
+	} else {
+		myUrl = "http://" + ac.Gateway + "/api.php"
+	}
+
+	myUrl = myUrl + "?" + params.Encode()
+
+	// Setup Timeout context
+	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", myUrl, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := ac.Client.Do(req)
+
+	if err != nil {
+		err = fmt.Errorf("executing API request failed: %w", err)
+		return err
+	}
+
+	respBody, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		err = fmt.Errorf("reading API response failed: %w\nBody: %s", err, respBody)
+		return err
+	}
+
+	resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		err = fmt.Errorf("API request failed with status %d", resp.StatusCode)
+		return err
+	}
+
+	return nil
+}
+
+func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte, err error) {
 	// Build request body as JSON
 	var buf bytes.Buffer
 
@@ -70,12 +135,18 @@ func (ac *ApiClient) DoRequest(url string, body interface{}) (respBody []byte, e
 	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
 	defer cancel()
 
-	// Build Request
-	baseUrl := "https://" + ac.Gateway + "/api/"
+	var baseUrl string
 
-	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+url, &buf)
+	// Build Request
+	if ac.UseTls {
+		baseUrl = "https://" + ac.Gateway + "/api/"
+	} else {
+		baseUrl = "http://" + ac.Gateway + "/api/"
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+rawUrl, &buf)
 	if err != nil {
-		return
+		return []byte(""), err
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -91,7 +162,7 @@ func (ac *ApiClient) DoRequest(url string, body interface{}) (respBody []byte, e
 		return
 	}
 
-	respBody, err = ioutil.ReadAll(resp.Body)
+	respBody, err = io.ReadAll(resp.Body)
 	if err != nil {
 		err = fmt.Errorf("reading API response failed: %w", err)
 		return
