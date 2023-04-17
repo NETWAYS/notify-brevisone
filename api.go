@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -89,6 +90,7 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, "GET", myUrl, nil)
+
 	if err != nil {
 		return err
 	}
@@ -96,8 +98,12 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 	resp, err := ac.Client.Do(req)
 
 	if err != nil {
-		err = fmt.Errorf("executing API request failed: %w", err)
-		return err
+		// We want to override the context error message to be more expressive
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fmt.Errorf("timeout during HTTP request: %w", err)
+		}
+
+		return fmt.Errorf("executing API request failed: %w", err)
 	}
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -143,6 +149,7 @@ func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte
 	baseUrl := schema + ac.Gateway + "/api/"
 
 	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+rawUrl, &buf)
+
 	if err != nil {
 		return []byte(""), err
 	}
@@ -155,9 +162,14 @@ func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte
 	}
 
 	resp, err := ac.Client.Do(req)
+
 	if err != nil {
-		err = fmt.Errorf("executing API request failed: %w", err)
-		return
+		// We want to override the context error message to be more expressive
+		if errors.Is(err, context.DeadlineExceeded) {
+			return []byte(""), fmt.Errorf("timeout during HTTP request: %w", err)
+		}
+
+		return []byte(""), fmt.Errorf("executing API request failed: %w", err)
 	}
 
 	respBody, err = io.ReadAll(resp.Body)

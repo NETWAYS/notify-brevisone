@@ -1,7 +1,9 @@
 package main
 
 import (
+	"net/http"
 	"testing"
+	"time"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +22,26 @@ func TestApiClient_Login(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, "abc123", ac.Token)
+}
+
+func TestApiClient_LoginTimeout(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("POST", "http://brevisone.local/api/signin",
+		func(req *http.Request) (*http.Response, error) {
+			resp := httpmock.NewStringResponse(200, `{"jwt":"abc123","expireAt":0}`)
+			time.Sleep(3 * time.Second)
+			return resp, nil
+		},
+	)
+
+	ac := NewApiClient("brevisone.local")
+
+	ac.Timeout = 1 * time.Second
+	err := ac.Login("admin", "password")
+	// Validate that the error message is what we defined
+	assert.ErrorContains(t, err, "timeout during HTTP request")
 }
 
 func TestApiClient_LoginErr(t *testing.T) {
