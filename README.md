@@ -35,6 +35,8 @@ Arguments:
   -u, --username string      API user name (required)
   -p, --password string      API user password (required)
       --insecure             Skip verification of the TLS certificates (is needed for the default self signed certificate)
+      --no-tls                Do NOT use TLS to connect to the gateway (default false)
+      --use-legacy-http-api   Use old HTTP API (required on older firmware versions, default false)
   -T, --target string        Target contact, group or phone number (required)
       --target-type string   Target type, one of: number, contact or contactgroup (default "number")
   -R, --ring                 Add ring mode (also ring the target after sending SMS)
