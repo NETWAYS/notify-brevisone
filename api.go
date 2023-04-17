@@ -76,15 +76,13 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 	params.Add("username", username)
 	params.Add("password", password)
 
-	var myUrl string
+	schema := "http://"
 
 	if ac.UseTls {
-		myUrl = "https://" + ac.Gateway + "/api.php"
-	} else {
-		myUrl = "http://" + ac.Gateway + "/api.php"
+		schema = "https://"
 	}
 
-	myUrl = myUrl + "?" + params.Encode()
+	myUrl := schema + ac.Gateway + "/api.php" + "?" + params.Encode()
 
 	// Setup Timeout context
 	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
@@ -135,14 +133,14 @@ func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte
 	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
 	defer cancel()
 
-	var baseUrl string
+	schema := "http://"
+
+	if ac.UseTls {
+		schema = "https://"
+	}
 
 	// Build Request
-	if ac.UseTls {
-		baseUrl = "https://" + ac.Gateway + "/api/"
-	} else {
-		baseUrl = "http://" + ac.Gateway + "/api/"
-	}
+	baseUrl := schema + ac.Gateway + "/api/"
 
 	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+rawUrl, &buf)
 	if err != nil {
