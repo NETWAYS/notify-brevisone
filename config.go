@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/spf13/pflag"
 )
@@ -93,40 +94,42 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) FormatMessage() (msg string) {
+func (c *Config) FormatMessage() string {
+	var msg strings.Builder
+
 	if c.date != "" {
-		msg += c.date + "/"
+		msg.WriteString(c.date + "/")
 	}
 
 	if c.notificationType != "" {
-		msg += c.notificationType + ": "
+		msg.WriteString(c.notificationType + ": ")
 	}
 
 	if c.serviceName != "" {
 		// This is a service notification
-		msg += fmt.Sprintf("%s @ %s - %s", c.serviceName, c.hostName, c.checkState)
+		msg.WriteString(fmt.Sprintf("%s @ %s - %s", c.serviceName, c.hostName, c.checkState))
 	} else {
-		msg += fmt.Sprintf("%s - %s", c.hostName, c.checkState)
+		msg.WriteString(fmt.Sprintf("%s - %s", c.hostName, c.checkState))
 	}
 
 	if c.comment != "" {
-		msg += fmt.Sprintf("\r\n\"%s\"", c.comment)
+		msg.WriteString(fmt.Sprintf("\r\n\"%s\"", c.comment))
 
 		if c.author != "" {
-			msg += fmt.Sprintf(` by %s`, c.author)
+			msg.WriteString(fmt.Sprintf(` by %s`, c.author))
 		}
 	}
 
 	if c.checkOutput != "" {
-		msg += "\r\n" + c.checkOutput
+		msg.WriteString("\r\n" + c.checkOutput)
 	}
 
 	// Cut off text longer than a single message
-	if len(msg) > SmsLength {
-		msg = msg[0:SmsLength-4] + "..."
+	if len(msg.String()) > SmsLength {
+		return msg.String()[0:SmsLength-4] + "..."
 	}
 
-	return
+	return msg.String()
 }
 
 func (c *Config) Run() (err error) {
