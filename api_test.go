@@ -63,6 +63,20 @@ func TestApiClient_DoRequest(t *testing.T) {
 	assert.Equal(t, `{"test":true}`, string(response))
 }
 
+func TestApiClient_DoLegacyRequest(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterResponder("GET", "http://brevisone.local/api.php?mode=number&password=password&text=text&to=to&username=username",
+		httpmock.NewStringResponder(200, `{"test":true}`))
+
+	ac := NewApiClient("brevisone.local")
+	ac.Token = "abc1234"
+
+	err := ac.DoLegacyRequest("test", "to", "text", "username", "password")
+	assert.NoError(t, err)
+}
+
 func TestApiClient_DoRequestErr(t *testing.T) {
 	ac := NewApiClient("local")
 
