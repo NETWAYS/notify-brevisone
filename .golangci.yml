@@ -1,6 +1,6 @@
 run:
   deadline: 1m
-  skip-files:
+issues.exclude-files:
     - '(.+)_test\.go'
 
 linters:
