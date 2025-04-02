@@ -12,7 +12,7 @@ func TestConfig_Bind(t *testing.T) {
 	config.BindArguments(plugin.FlagSet)
 	plugin.ParseArguments()
 
-	assert.Equal(t, true, plugin.FlagSet.Parsed())
+	assert.True(t, plugin.FlagSet.Parsed())
 }
 
 func TestConfig_Validate(t *testing.T) {

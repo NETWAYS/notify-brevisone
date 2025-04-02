@@ -7,6 +7,7 @@ import (
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestApiClient_Login(t *testing.T) {
@@ -19,7 +20,7 @@ func TestApiClient_Login(t *testing.T) {
 	ac := NewApiClient("brevisone.local")
 
 	err := ac.Login("admin", "password")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.Equal(t, "abc123", ac.Token)
 }
@@ -31,7 +32,9 @@ func TestApiClient_LoginTimeout(t *testing.T) {
 	httpmock.RegisterResponder("POST", "http://brevisone.local/api/signin",
 		func(req *http.Request) (*http.Response, error) {
 			resp := httpmock.NewStringResponse(200, `{"jwt":"abc123","expireAt":0}`)
+
 			time.Sleep(3 * time.Second)
+
 			return resp, nil
 		},
 	)
@@ -81,7 +84,7 @@ func TestApiClient_DoRequest(t *testing.T) {
 	ac.Token = "abc1234"
 
 	response, err := ac.DoRequest("test", nil)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, `{"test":true}`, string(response))
 }
 
