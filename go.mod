@@ -6,7 +6,7 @@ require (
 	github.com/NETWAYS/go-check v0.6.2
 	github.com/jarcoal/httpmock v1.4.1
 	github.com/spf13/pflag v1.0.7
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 )
 
 require (
