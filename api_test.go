@@ -2,12 +2,11 @@ package main
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/jarcoal/httpmock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestApiClient_Login(t *testing.T) {
@@ -20,9 +19,14 @@ func TestApiClient_Login(t *testing.T) {
 	ac := NewApiClient("brevisone.local")
 
 	err := ac.Login("admin", "password")
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 
-	assert.Equal(t, "abc123", ac.Token)
+	//nolint:all
+	if "abc123" != ac.Token {
+		t.Fatalf("expected %v, got %v", "abc123", ac.Token)
+	}
 }
 
 func TestApiClient_LoginTimeout(t *testing.T) {
@@ -44,7 +48,9 @@ func TestApiClient_LoginTimeout(t *testing.T) {
 	ac.Timeout = 1 * time.Second
 	err := ac.Login("admin", "password")
 	// Validate that the error message is what we defined
-	assert.ErrorContains(t, err, "timeout during HTTP request")
+	if !strings.Contains(err.Error(), "timeout during HTTP request") {
+		t.Fatalf("expected %v, got %v", "timeout during HTTP request", err.Error())
+	}
 }
 
 func TestApiClient_LoginErr(t *testing.T) {
@@ -57,7 +63,9 @@ func TestApiClient_LoginErr(t *testing.T) {
 	ac := NewApiClient("brevisone.local")
 
 	err := ac.Login("admin", "password")
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expected error, got none")
+	}
 }
 
 func TestApiClient_UnmarshalErr(t *testing.T) {
@@ -70,7 +78,9 @@ func TestApiClient_UnmarshalErr(t *testing.T) {
 	ac := NewApiClient("brevisone.local")
 
 	err := ac.Login("admin", "password")
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expected error, got none")
+	}
 }
 
 func TestApiClient_DoRequest(t *testing.T) {
@@ -84,8 +94,14 @@ func TestApiClient_DoRequest(t *testing.T) {
 	ac.Token = "abc1234"
 
 	response, err := ac.DoRequest("test", nil)
-	require.NoError(t, err)
-	assert.Equal(t, `{"test":true}`, string(response))
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	//nolint:all
+	if `{"test":true}` != string(response) {
+		t.Fatalf("expected %v, got %v", `{"test":true}`, string(response))
+	}
 }
 
 func TestApiClient_DoLegacyRequest(t *testing.T) {
@@ -99,12 +115,16 @@ func TestApiClient_DoLegacyRequest(t *testing.T) {
 	ac.Token = "abc1234"
 
 	err := ac.DoLegacyRequest("test", "to", "text", "username", "password")
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 }
 
 func TestApiClient_DoRequestErr(t *testing.T) {
 	ac := NewApiClient("local")
 
 	_, err := ac.DoRequest("test", nil)
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expected error, got none")
+	}
 }

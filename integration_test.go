@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
@@ -38,5 +37,8 @@ func TestConfig_Run_Integration(t *testing.T) {
 		notificationType: "CUSTOM",
 	}
 
-	assert.NoError(t, c.Run())
+	err := c.Run()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 }

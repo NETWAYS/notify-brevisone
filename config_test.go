@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/NETWAYS/go-check"
-	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -12,7 +11,9 @@ func TestConfig_Bind(t *testing.T) {
 	config.BindArguments(plugin.FlagSet)
 	plugin.ParseArguments()
 
-	assert.True(t, plugin.FlagSet.Parsed())
+	if !plugin.FlagSet.Parsed() {
+		t.Fatalf("expected CLI be parsed, got %v", plugin.FlagSet.Parsed())
+	}
 }
 
 func TestConfig_Validate(t *testing.T) {
@@ -27,7 +28,10 @@ func TestConfig_Validate(t *testing.T) {
 		notificationType: "PROBLEM",
 	}
 
-	assert.NoError(t, c.Validate())
+	err := c.Validate()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
 }
 
 func TestConfig_FormatMessage(t *testing.T) {
@@ -41,30 +45,41 @@ func TestConfig_FormatMessage(t *testing.T) {
 	}
 
 	// Host Problem Notification
-	assert.Equal(t, "PROBLEM: HOST - DOWN\r\nStuff is broken!", c.FormatMessage())
+	expected := "PROBLEM: HOST - DOWN\r\nStuff is broken!"
+	if expected != c.FormatMessage() {
+		t.Fatalf("expected %v, got %v", expected, c.FormatMessage())
+	}
 
 	// Service Problem Notification
 	c.checkState = "CRITICAL"
 	c.serviceName = "SERVICE"
 
-	assert.Equal(t, "PROBLEM: SERVICE @ HOST - CRITICAL\r\nStuff is broken!", c.FormatMessage())
+	expected = "PROBLEM: SERVICE @ HOST - CRITICAL\r\nStuff is broken!"
+
+	if expected != c.FormatMessage() {
+		t.Fatalf("expected %v, got %v", expected, c.FormatMessage())
+	}
 
 	// With comment
 	c.notificationType = "CUSTOM"
 	c.author = "icingaadmin"
 	c.comment = "ok for now"
 
-	assert.Equal(t,
-		"CUSTOM: SERVICE @ HOST - CRITICAL\r\n\"ok for now\" by icingaadmin\r\nStuff is broken!",
-		c.FormatMessage())
+	expected = "CUSTOM: SERVICE @ HOST - CRITICAL\r\n\"ok for now\" by icingaadmin\r\nStuff is broken!"
+
+	if expected != c.FormatMessage() {
+		t.Fatalf("expected %v, got %v", expected, c.FormatMessage())
+	}
 
 	// With a long message cut off
 	c.checkOutput = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been" +
 		"the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and" +
 		"scrambled it to make a type specimen book."
 
-	assert.Equal(t,
-		"CUSTOM: SERVICE @ HOST - CRITICAL\r\n\"ok for now\" by icingaadmin\r\n"+
-			"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has b...",
-		c.FormatMessage())
+	expected = "CUSTOM: SERVICE @ HOST - CRITICAL\r\n\"ok for now\" by icingaadmin\r\n" +
+		"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has b..."
+
+	if expected != c.FormatMessage() {
+		t.Fatalf("expected %v, got %v", expected, c.FormatMessage())
+	}
 }
