@@ -9,14 +9,14 @@ import (
 	"github.com/jarcoal/httpmock"
 )
 
-func TestApiClient_Login(t *testing.T) {
+func TestAPIClient_Login(t *testing.T) {
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 
 	httpmock.RegisterResponder("POST", "http://brevisone.local/api/signin",
 		httpmock.NewStringResponder(200, `{"jwt":"abc123","expireAt":0}`))
 
-	ac := NewApiClient("brevisone.local")
+	ac := NewAPIClient("brevisone.local")
 
 	err := ac.Login("admin", "password")
 	if err != nil {
@@ -43,7 +43,7 @@ func TestApiClient_LoginTimeout(t *testing.T) {
 		},
 	)
 
-	ac := NewApiClient("brevisone.local")
+	ac := NewAPIClient("brevisone.local")
 
 	ac.Timeout = 1 * time.Second
 	err := ac.Login("admin", "password")
@@ -60,7 +60,7 @@ func TestApiClient_LoginErr(t *testing.T) {
 	httpmock.RegisterResponder("POST", "https://brevisone.local/api/signin",
 		httpmock.NewStringResponder(401, `{}`))
 
-	ac := NewApiClient("brevisone.local")
+	ac := NewAPIClient("brevisone.local")
 
 	err := ac.Login("admin", "password")
 	if err == nil {
@@ -75,7 +75,7 @@ func TestApiClient_UnmarshalErr(t *testing.T) {
 	httpmock.RegisterResponder("POST", "https://brevisone.local/api/signin",
 		httpmock.NewStringResponder(200, `{`))
 
-	ac := NewApiClient("brevisone.local")
+	ac := NewAPIClient("brevisone.local")
 
 	err := ac.Login("admin", "password")
 	if err == nil {
@@ -90,7 +90,7 @@ func TestApiClient_DoRequest(t *testing.T) {
 	httpmock.RegisterResponder("POST", "http://brevisone.local/api/test",
 		httpmock.NewStringResponder(200, `{"test":true}`))
 
-	ac := NewApiClient("brevisone.local")
+	ac := NewAPIClient("brevisone.local")
 	ac.Token = "abc1234"
 
 	response, err := ac.DoRequest("test", nil)
@@ -111,7 +111,7 @@ func TestApiClient_DoLegacyRequest(t *testing.T) {
 	httpmock.RegisterResponder("GET", "http://brevisone.local/api.php?mode=number&password=password&text=text&to=to&username=username",
 		httpmock.NewStringResponder(200, `{"test":true}`))
 
-	ac := NewApiClient("brevisone.local")
+	ac := NewAPIClient("brevisone.local")
 	ac.Token = "abc1234"
 
 	err := ac.DoLegacyRequest("test", "to", "text", "username", "password")
@@ -121,7 +121,7 @@ func TestApiClient_DoLegacyRequest(t *testing.T) {
 }
 
 func TestApiClient_DoRequestErr(t *testing.T) {
-	ac := NewApiClient("local")
+	ac := NewAPIClient("local")
 
 	_, err := ac.DoRequest("test", nil)
 	if err == nil {
