@@ -27,7 +27,7 @@ func main() {
 
 	if len(os.Args) <= 1 {
 		plugin.FlagSet.Usage()
-		check.ExitRaw(check.Unknown, "No arguments given")
+		check.Exit(check.Unknown, "No arguments given")
 	}
 
 	err := config.Validate()
@@ -40,5 +40,5 @@ func main() {
 		check.ExitError(err)
 	}
 
-	check.ExitRaw(check.OK, "done")
+	check.Exit(check.OK, "done")
 }
