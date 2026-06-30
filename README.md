@@ -1,35 +1,32 @@
 # notify-brevisone
 
-Notification Plugin for [brevis.one] SMS Gateways to send SMS messages or ring a contact.
+Notification Plugin for brevis.one SMS Gateways to send SMS messages or ring a contact.
 
-Documentation for your gateway can be found under [docs.brevis.one](https://docs.brevis.one/current/en/).
+Documentation for your gateway can be found here [docs.brevis.one](https://docs.brevis.one/current/en/Content/Home.htm).
 
 ## Installation
 
 Download the current binary from GitHub and install it with Icinga 2. See [releases](https://github.com/NETWAYS/notify-brevisone/releases).
 
-    curl -L -o notify-brevisone https://github.com/NETWAYS/notify-brevisone/releases/download/v0.1.0/notify-brevisone_0.1.0_Linux_x86_64
-    chmod 755 notify-brevisone
-    cp notify-brevisone /etc/icinga2/scripts/
+```bash
+chmod 755 notify-brevisone
+cp notify-brevisone /etc/icinga2/scripts/
 
-    /etc/icinga2/scripts/notify-brevisone --help
+/etc/icinga2/scripts/notify-brevisone --help
+```
 
-You can use the provided config under [examples] for a standard `NotificationCommand`,
-when included properly in icinga2, Director can learn it via a Kickstart.
+You can use the provided configuration in the `contrib` directory for an example `NotificationCommand`.
 
-    curl -L -o /etc/icinga2/conf.d/brevisone.conf https://raw.githubusercontent.com/NETWAYS/notify-brevisone/main/examples/icinga2/commands.conf
+```bash
+curl -L -o /etc/icinga2/conf.d/brevisone.conf \
+https://raw.githubusercontent.com/NETWAYS/notify-brevisone/main/contrib/icinga2/commands.conf
+```
 
-Of course, you can adjust the command to your needs.
+You can adjust the command to your needs.
 
 ## Usage
 
-```
-./notify-brevisone --help
-Usage of notify-brevisone
-
-Notifications via a brevis.one gateway.
-Sends SMS or rings at a given number
-
+```bash
 Arguments:
   -g, --gateway string       IP/address of the brevis.one gateway (required)
   -u, --username string      API user name (required)
@@ -52,7 +49,6 @@ Arguments:
   -d, --debug                Enable debug mode
   -v, --verbose              Enable verbose mode
   -V, --version              Print version and exit
-
 ```
 
 To use this plugin the brevis.one gateway has to be configured properly:
@@ -65,9 +61,11 @@ To use this plugin the brevis.one gateway has to be configured properly:
   adding the `--insecure` flag allows you to ignore this (although this is not recommended)
 
 ## Examples
+
 An example for a (custom) service notification with a preconfigured contact:
-```
-./notify-brevisOne \
+
+```bash
+notify-brevisOne \
 	'--gateway''192.168.0.2' \
 	'--username' 'admin' \
 	'--password' 'admin' \
@@ -82,11 +80,13 @@ An example for a (custom) service notification with a preconfigured contact:
 	'--output' 'Hello World' \
 	'--state' 'WARNING'
 ```
-sends the message: `2021-04-14 15:29:06 +0200/CUSTOM: fake @ myHost - WARNING "asfsdf" by aRandomMonitor Hello World`
 
-An example for a (recovery) Host notification with a phone number directly
-```
-./notify-brevisOne \
+This sends the message: `2021-04-14 15:29:06 +0200/CUSTOM: fake @ myHost - WARNING "asfsdf" by aRandomMonitor Hello World`
+
+An example for a (recovery) Host notification with a phone number directly:
+
+```bash
+notify-brevisOne \
 	'--gateway''192.168.0.2' \
 	'--username' 'admin' \
 	'--password' 'admin' \
@@ -97,21 +97,12 @@ An example for a (recovery) Host notification with a phone number directly
 	'--output' 'It pings again!' \
 	'--state' 'OK'
 ```
-sends the message: `2021-04-14 15:29:06 +0200/RECOVERY: myHost - OK It pings again!`
 
-## Building manually
-
-After cloning the repository, execute the following in the directory:
-
-```
-go build -o notify-brevisone .
-```
-
-We recommend using the releases under: https://github.com/NETWAYS/notify-brevisone/releases
+This sends the message: `2021-04-14 15:29:06 +0200/RECOVERY: myHost - OK It pings again!`
 
 ## License
 
-[brevis.one] is a trademark of BASIS Europe Distribution GmbH
+brevis.one is a trademark of BASIS Europe GmbH
 
 Copyright (C) 2021 [NETWAYS GmbH](mailto:info@netways.de)
 
@@ -127,6 +118,3 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-[brevis.one]: https://brevis.one/
-[examples]: https://github.com/NETWAYS/notify-brevisone/tree/main/examples/icinga2
