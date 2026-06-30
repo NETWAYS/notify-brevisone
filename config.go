@@ -29,7 +29,7 @@ type Config struct {
 	date             string
 	notificationType string
 	doNotUseTLS      bool
-	useLegacyHttpApi bool
+	useLegacyAPI     bool
 }
 
 func (c *Config) BindArguments(fs *pflag.FlagSet) {
@@ -40,7 +40,7 @@ func (c *Config) BindArguments(fs *pflag.FlagSet) {
 	fs.BoolVar(&c.insecure, "insecure", false,
 		"Skip verification of the TLS certificates (is needed for the default self signed certificate, default false)")
 	fs.BoolVar(&c.doNotUseTLS, "no-tls", false, "Do NOT use TLS to connect to the gateway (default false)")
-	fs.BoolVar(&c.useLegacyHttpApi, "use-legacy-http-api", false, "Use old HTTP API (required on older firmware versions, default false)")
+	fs.BoolVar(&c.useLegacyAPI, "use-legacy-http-api", false, "Use old HTTP API (required on older firmware versions, default false)")
 
 	// Where to send the message to
 	fs.StringVarP(&c.target, "target", "T", "", "Target contact, group or phone number (required)")
@@ -107,16 +107,16 @@ func (c *Config) FormatMessage() string {
 
 	if c.serviceName != "" {
 		// This is a service notification
-		msg.WriteString(fmt.Sprintf("%s @ %s - %s", c.serviceName, c.hostName, c.checkState))
+		fmt.Fprintf(&msg, "%s @ %s - %s", c.serviceName, c.hostName, c.checkState)
 	} else {
-		msg.WriteString(fmt.Sprintf("%s - %s", c.hostName, c.checkState))
+		fmt.Fprintf(&msg, "%s - %s", c.hostName, c.checkState)
 	}
 
 	if c.comment != "" {
-		msg.WriteString(fmt.Sprintf("\r\n\"%s\"", c.comment))
+		fmt.Fprintf(&msg, "\r\n\"%s\"", c.comment)
 
 		if c.author != "" {
-			msg.WriteString(fmt.Sprintf(` by %s`, c.author))
+			msg.WriteString(" by " + c.author)
 		}
 	}
 
@@ -134,7 +134,7 @@ func (c *Config) FormatMessage() string {
 
 func (c *Config) Run() (err error) {
 	// Setup API client
-	api := NewApiClient(c.gateway)
+	api := NewAPIClient(c.gateway)
 
 	// Update client to allow insecure when requested
 	if c.insecure {
@@ -145,9 +145,10 @@ func (c *Config) Run() (err error) {
 		}
 	}
 
-	api.UseTls = !c.doNotUseTLS
+	api.UseTLS = !c.doNotUseTLS
 
-	if c.useLegacyHttpApi {
+	//nolint: nestif
+	if c.useLegacyAPI {
 		err := api.DoLegacyRequest(c.targetType,
 			c.target,
 			c.FormatMessage(),

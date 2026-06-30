@@ -5,6 +5,14 @@ import (
 	"testing"
 )
 
+func TestBuildVersion(t *testing.T) {
+	expected := "development\ncommit: HEAD\ndate: latest"
+
+	if expected != buildVersion() {
+		t.Error("\nActual: ", buildVersion(), "\nExpected: ", expected)
+	}
+}
+
 func TestConfig_Run_Integration(t *testing.T) {
 	var (
 		gateway  = os.Getenv("BREVIS_INTEGRATION_GATEWAY")

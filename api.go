@@ -12,30 +12,47 @@ import (
 	"time"
 )
 
-type ApiClient struct {
-	Client  *http.Client
-	Gateway string
-	Token   string
-	Timeout time.Duration
-	UseTls  bool
+const DefaultTimeout = 5
+
+type AuthTokenAnswer struct {
+	Token    string `json:"jwt"`
+	ExpireAt uint   `json:"expireAt"`
 }
 
-const DefaultTimeout = 5
+type Recipient struct {
+	To     string `json:"to"`
+	Target string `json:"target"`
+}
+
+type Message struct {
+	Recipients []Recipient `json:"recipients"`
+	Text       string      `json:"text"`
+	Provider   string      `json:"provider"`
+	Type       string      `json:"type"`
+}
 
 type Credentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-func NewApiClient(gateway string) *ApiClient {
-	return &ApiClient{
+type APIClient struct {
+	Client  *http.Client
+	Gateway string
+	Token   string
+	Timeout time.Duration
+	UseTLS  bool
+}
+
+func NewAPIClient(gateway string) *APIClient {
+	return &APIClient{
 		Client:  &http.Client{},
 		Gateway: gateway,
 		Timeout: DefaultTimeout * time.Second,
 	}
 }
 
-func (ac *ApiClient) Login(username, password string) (err error) {
+func (ac *APIClient) Login(username, password string) (err error) {
 	ac.Token = ""
 
 	response, err := ac.DoRequest("signin", Credentials{username, password})
@@ -57,7 +74,7 @@ func (ac *ApiClient) Login(username, password string) (err error) {
 	return
 }
 
-func (ac *ApiClient) DoLegacyRequest(mode string,
+func (ac *APIClient) DoLegacyRequest(mode string,
 	to string,
 	text string,
 	username string,
@@ -80,17 +97,17 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 
 	schema := "http://"
 
-	if ac.UseTls {
+	if ac.UseTLS {
 		schema = "https://"
 	}
 
-	myUrl := schema + ac.Gateway + "/api.php" + "?" + params.Encode()
+	u := schema + ac.Gateway + "/api.php" + "?" + params.Encode()
 
 	// Setup Timeout context
 	ctx, cancel := context.WithTimeout(context.Background(), ac.Timeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", myUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 
 	if err != nil {
 		return err
@@ -116,7 +133,7 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 
 	resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("API request failed with status %d", resp.StatusCode)
 		return err
 	}
@@ -124,7 +141,7 @@ func (ac *ApiClient) DoLegacyRequest(mode string,
 	return nil
 }
 
-func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte, err error) {
+func (ac *APIClient) DoRequest(rawURL string, body any) (respBody []byte, err error) {
 	// Build request body as JSON
 	var buf bytes.Buffer
 
@@ -142,14 +159,14 @@ func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte
 
 	schema := "http://"
 
-	if ac.UseTls {
+	if ac.UseTLS {
 		schema = "https://"
 	}
 
 	// Build Request
-	baseUrl := schema + ac.Gateway + "/api/"
+	b := schema + ac.Gateway + "/api/"
 
-	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl+rawUrl, &buf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, b+rawURL, &buf)
 
 	if err != nil {
 		return []byte(""), err
@@ -181,7 +198,7 @@ func (ac *ApiClient) DoRequest(rawUrl string, body interface{}) (respBody []byte
 
 	resp.Body.Close()
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("API request failed with status %d", resp.StatusCode)
 		return
 	}
