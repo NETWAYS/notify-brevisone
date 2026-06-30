@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/NETWAYS/go-check"
@@ -10,6 +11,13 @@ const readme = `Notifications via a brevis.one gateway.
 Sends SMS or rings at a given number
 
 https://github.com/NETWAYS/notify-brevisone`
+
+var (
+	// These get filled at build time with the proper values
+	version = "development"
+	commit  = "HEAD"
+	date    = "latest"
+)
 
 func main() {
 	defer check.CatchPanic()
@@ -41,4 +49,18 @@ func main() {
 	}
 
 	check.Exit(check.OK, "done")
+}
+
+func buildVersion() string {
+	result := version
+
+	if commit != "" {
+		result = fmt.Sprintf("%s\ncommit: %s", result, commit)
+	}
+
+	if date != "" {
+		result = fmt.Sprintf("%s\ndate: %s", result, date)
+	}
+
+	return result
 }

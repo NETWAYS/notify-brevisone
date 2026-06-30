@@ -12,19 +12,36 @@ import (
 	"time"
 )
 
+const DefaultTimeout = 5
+
+type AuthTokenAnswer struct {
+	Token    string `json:"jwt"`
+	ExpireAt uint   `json:"expireAt"`
+}
+
+type Recipient struct {
+	To     string `json:"to"`
+	Target string `json:"target"`
+}
+
+type Message struct {
+	Recipients []Recipient `json:"recipients"`
+	Text       string      `json:"text"`
+	Provider   string      `json:"provider"`
+	Type       string      `json:"type"`
+}
+
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type APIClient struct {
 	Client  *http.Client
 	Gateway string
 	Token   string
 	Timeout time.Duration
 	UseTLS  bool
-}
-
-const DefaultTimeout = 5
-
-type Credentials struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
 }
 
 func NewAPIClient(gateway string) *APIClient {
